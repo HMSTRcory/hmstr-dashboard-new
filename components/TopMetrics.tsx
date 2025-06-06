@@ -1,34 +1,24 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getClients, getTopMetrics, getHumanEngagementStats } from '@/lib/queries';
-
-interface Client {
-  client_id: string;
-  name: string;
-}
+import { getTopMetrics, getHumanEngagementStats } from '@/lib/queries';
 
 export function TopMetrics() {
-  const [clients, setClients] = useState<Client[]>([]);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
-  const [startDate, setStartDate] = useState<string>('2024-01-01');
-  const [endDate, setEndDate] = useState<string>('2024-12-31');
   const [metrics, setMetrics] = useState<{ [key: string]: number } | null>(null);
   const [engagementStats, setEngagementStats] = useState<{
     total_count: number;
     engaged_count: number;
   } | null>(null);
 
-  useEffect(() => {
-    async function loadClients() {
-      const data = await getClients();
-      setClients(data);
-      if (data.length > 0) {
-        setSelectedClientId(data[0].client_id);
-      }
-    }
+  // Static date range for now
+  const startDate = '2024-01-01';
+  const endDate = '2024-12-31';
 
-    loadClients();
+  useEffect(() => {
+    // For now, hardcode a client ID for demo purposes
+    const hardcodedClientId = 'demo-client-id';
+    setSelectedClientId(hardcodedClientId);
   }, []);
 
   useEffect(() => {
@@ -42,7 +32,7 @@ export function TopMetrics() {
     }
 
     fetchMetrics();
-  }, [selectedClientId, startDate, endDate]);
+  }, [selectedClientId]);
 
   return (
     <div>
