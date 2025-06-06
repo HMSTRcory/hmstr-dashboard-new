@@ -1,4 +1,3 @@
-// components/DashboardFilters.tsx
 'use client';
 
 import { format } from 'date-fns';
@@ -7,6 +6,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+
+interface DateRange {
+  from: Date;
+  to?: Date;
+}
 
 interface DateRangeSelectorProps {
   dateRange: DateRange | undefined;
