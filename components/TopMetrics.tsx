@@ -1,78 +1,72 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { getClients, getTopMetrics, getHumanEngagementStats } from '@/lib/queries';
+import { useEffect, useState } from "react";
+import { getClients, getTopMetrics, getHumanEngagementStats } from "../lib/queries";
 
 interface Client {
   client_id: string;
-  name: string;
-  ppc_sources: string[];
-  lsa_sources: string[];
-  seo_sources: string[];
+  client_name: string;
 }
 
-interface Metrics {
-  qualified_leads: number;
-  qualified_leads_ppc: number;
-  qualified_leads_lsa: number;
-  qualified_leads_seo: number;
-  spend_ppc: number;
-  spend_lsa: number;
-  spend_seo: number;
-  spend_total: number;
-  cpql_ppc: number;
-  cpql_lsa: number;
-  cpql_seo: number;
-  cpql_total: number;
-}
-
-export default function TopMetrics({ startDate, endDate }: { startDate: string; endDate: string }) {
+export function TopMetrics() {
   const [clients, setClients] = useState<Client[]>([]);
-  const [data, setData] = useState<Record<string, Metrics & { human_engaged: number; total: number }>>({});
+  const [selectedClient, setSelectedClient] = useState<string>("");
+  const [metrics, setMetrics] = useState<any>(null);
+  const [engagement, setEngagement] = useState<any>(null);
 
   useEffect(() => {
-    async function load() {
-      const clientList = await getClients();
-      setClients(clientList);
+    getClients().then(setClients);
+  }, []);
 
-      const all: Record<string, Metrics & { human_engaged: number; total: number }> = {};
-      for (const c of clientList) {
-        const [metrics, human] = await Promise.all([
-          getTopMetrics(c.client_id, startDate, endDate),
-          getHumanEngagementStats(c.client_id, startDate, endDate)
-        ]);
+  useEffect(() => {
+    if (!selectedClient) return;
 
-        all[c.client_id] = {
-          ...metrics,
-          human_engaged: human?.engaged_count || 0,
-          total: human?.total_count || 0
-        };
-      }
-
-      setData(all);
-    }
-
-    load();
-  }, [startDate, endDate]);
+    getTopMetrics(selectedClient, "2024-01-01", "2024-12-31").then(setMetrics);
+    getHumanEngagementStats(selectedClient, "2024-01-01", "2024-12-31").then(setEngagement);
+  }, [selectedClient]);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-8">
-      {clients.map((client) => {
-        const d = data[client.client_id];
-        if (!d) return null;
+    <div className="p-4 border rounded shadow">
+      <h2 className="text-xl font-bold mb-4">Top Metrics</h2>
 
-        return (
-          <div key={client.client_id} className="border rounded-lg p-4 shadow-sm bg-white">
-            <h2 className="text-lg font-semibold mb-2">{client.name}</h2>
-            <ul className="text-sm space-y-1">
-              <li><strong>Qualified Leads:</strong> {d.qualified_leads}</li>
-              <li><strong>CPQL (Total):</strong> ${d.cpql_total.toFixed(2)}</li>
-              <li><strong>Spend (Total):</strong> ${d.spend_total.toFixed(2)}</li>
-              <li><strong>Human Engaged:</strong> {d.human_engaged} / {d.total}</li>
-            </ul>
+      <select
+        value={selectedClient}
+        onChange={(e) => setSelectedClient(e.target.value)}
+        className="border p-2 rounded mb-4"
+      >
+        <option value="">Select a client</option>
+        {clients.map((client) => (
+          <option key={client.client_id} value={client.client_id}>
+            {client.client_name}
+          </option>
+        ))}
+      </select>
+
+      {metrics && (
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <strong>Qualified Leads:</strong> {metrics.qualified_leads}
           </div>
-        );
-      })}
+          <div>
+            <strong>Spend PPC:</strong> ${metrics.spend_ppc.toFixed(2)}
+          </div>
+          <div>
+            <strong>CPQL PPC:</strong> ${metrics.cpql_ppc.toFixed(2)}
+          </div>
+          <div>
+            <strong>CPQL LSA:</strong> ${metrics.cpql_lsa.toFixed(2)}
+          </div>
+          <div>
+            <strong>CPQL SEO:</strong> ${metrics.cpql_seo.toFixed(2)}
+          </div>
+        </div>
+      )}
+
+      {engagement && (
+        <div className="mt-4">
+          <strong>Human Engagement:</strong> {engagement.engaged_count} / {engagement.total_count}
+        </div>
+      )}
     </div>
   );
 }
