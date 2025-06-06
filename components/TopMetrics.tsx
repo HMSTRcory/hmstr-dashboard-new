@@ -3,7 +3,6 @@
 
 import { useEffect, useState } from 'react';
 import { getClients, getTopMetrics, getHumanEngagementStats } from '@/lib/queries';
-import { getSPC } from '@/lib/spc';
 
 interface Client {
   client_id: string;
